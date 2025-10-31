@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aderência ao Calendário de Cerveja - Off Trade Ambev</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0055a5; 
+            --secondary: #ffcc00;
+            --success: #28a745;
+            --warning: #ffc107; /* Amarelo Ambev Tech / Bees */
+            --danger: #dc3545;
+            --light: #ffffff;
+            --dark: #343a40; /* Cinza Escuro Ambev Tech */
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --light-gray-bg: #f9fafb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; 
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+            color: var(--warning);
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* [RESPONSIVO] */
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            white-space: nowrap; /* Evita quebra de texto */
+        }
+        
+        .tab.active {
+            background-color: var(--warning);
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: #5a5a5a;
+        }
+        
+        main {
+            padding: 20px 0;
+        }
+        
+        .card {
+            background: var(--light);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--light-gray);
+            padding: 20px;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slide-up-fade-in 0.5s ease-out forwards;
+        }
+
+        @keyframes slide-up-fade-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title i {
+            color: var(--warning);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+        
+        .loja-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* [MUDANÇA] Layout de 2 colunas */
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+            .loja-dashboard {
+                grid-template-columns: 1fr; /* Empilha no mobile */
+            }
+        }
+        @media (max-width: 640px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .kpi-card {
+            text-align: center;
+            padding: 20px;
+            position: relative; 
+            min-height: 280px; 
+        }
+        
+        .kpi-value {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--dark);
+        }
+        
+        .kpi-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            left: 0;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 100%; 
+            height: 150px;
+            margin: 0 auto;
+            margin-bottom: 10px;
+        }
+        
+        .text-3d {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #444;
+            text-shadow: 
+                -1px -1px 0 #FFD700,
+                 1px -1px 0 #FFD700,
+                -1px  1px 0 #FFD700,
+                 1px  1px 0 #FFD700,
+                 2px  3px 0 #AAA;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .last-update {
+            display: none;
+        }
+        
+        /* Estilos dos Cards de Destaque */
+        .highlight-card {
+            padding: 15px;
+            min-height: 280px; 
+            border-radius: 8px;
+             border: 1px solid var(--light-gray);
+             background-color: var(--light);
+        }
+        .highlight-positive {
+             border-left-color: var(--success);
+             border-left-width: 4px;
+             background-color: rgba(40, 167, 69, 0.03);
+        }
+        .highlight-negative {
+             border-left-color: var(--danger);
+             border-left-width: 4px;
+             background-color: rgba(220, 53, 69, 0.03);
+        }
+        .highlight-neutral {
+            border-left-color: var(--gray);
+             border-left-width: 4px;
+             background-color: rgba(108, 117, 125, 0.03);
+        }
+        
+        .highlight-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .rank-item {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--light-gray);
+            border-left-width: 4px;
+            border-left-color: transparent;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            transition: all 0.2s ease-out;
+        }
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+        .highlight-card .rank-item:hover {
+             transform: none;
+             background-color: transparent;
+             box-shadow: none;
+        }
+        .rank-item-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+        .rank-item-product {
+             font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .rank-item-value {
+             font-weight: bold; 
+             font-size: 0.9rem;
+             white-space: nowrap;
+        }
+
+
+        .filters {
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            /* ... */
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: none;
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid var(--light-gray); 
+            border-radius: 8px;
+             padding: 0;
+             background: transparent;
+             box-shadow: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+             background: transparent;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+            white-space: nowrap;
+        }
+        
+        th {
+            background-color: transparent;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+        }
+        
+        th[data-sort] {
+            position: relative;
+        }
+        th[data-sort]::after {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 4px solid transparent;
+            opacity: 0.3;
+        }
+        th.sort-asc::after {
+            border-bottom-color: var(--dark);
+            opacity: 1;
+        }
+        th.sort-desc::after {
+            border-top-color: var(--dark);
+            opacity: 1;
+        }
+
+        tr.table-row-clickable:hover {
+            background-color: var(--light-gray-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-out;
+        }
+        tr.table-row-clickable {
+            transition: all 0.2s ease-out;
+        }
+        
+        .positive {
+            color: var(--success);
+        }
+        
+        .negative {
+            color: var(--danger);
+        }
+        
+        .neutral {
+            color: var(--warning);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+        
+        .badge-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .data-bar-container {
+            position: relative;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1; 
+        }
+        .data-bar-fill {
+            position: absolute;
+            height: 100%;
+            left: 0;
+            top: 0;
+            border-radius: 4px;
+            opacity: 0.2;
+            z-index: -1;
+            width: 0;
+            transition: width 0.5s ease-out;
+        }
+        tr:hover .data-bar-fill,
+        .animated-card .data-bar-fill {
+             width: var(--data-width, 0%);
+        }
+
+        .data-bar-text {
+            padding-left: 4px;
+            font-weight: 600;
+        }
+        /* Fim Data Bars */
+
+        .status-icon {
+            margin-right: 8px;
+            font-size: 0.75rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+            flex-wrap: wrap; 
+        }
+        
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: none;
+        }
+        .page-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            box-shadow: none;
+        }
+        
+        .page-btn.active {
+            background-color: var(--warning);
+            color: var(--dark);
+            border-color: var(--warning);
+            box-shadow: none;
+        }
+        
+        .page-btn:hover:not(.active):not(.disabled) {
+            background-color: var(--light-gray);
+            transform: translateY(-1px);
+            color: var(--dark);
+            box-shadow: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--warning);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .export-btn, .data-source button {
+            background-color: var(--warning);
+            color: var(--dark);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .export-btn:disabled {
+             background-color: var(--gray);
+             cursor: not-allowed;
+             color: white;
+             box-shadow: none;
+        }
+        
+        .export-btn:hover:not(:disabled), .data-source button:hover {
+            background-color: #e6b300;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .export-btn:active:not(:disabled), .data-source button:active {
+             box-shadow: none;
+             transform: translateY(0px);
+        }
+        
+        .data-source {
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .data-source input {
+            flex: 1;
+        }
+        
+        .data-source button {
+            height: 37px;
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+             .data-source {
+                grid-template-columns: 1fr;
+            }
+            .data-source button {
+                width: 100%;
+            }
+             /* [RESPONSIVO] Ajuste do cabeçalho */
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .logo h1 {
+                font-size: 1.2rem;
+            }
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
+            }
+            .tab {
+                flex: 1;
+                text-align: center;
+                font-size: 0.9rem;
+                padding: 10px 5px;
+            }
+        }
+        
+        /* --- Estilos do Chat IA --- */
+        #chat-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--warning);
+            color: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+             transition: all 0.2s ease-out;
+        }
+        #chat-fab:hover {
+            transform: scale(1.1);
+        }
+        
+        #chat-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+        }
+        
+        #chat-modal.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        
+        .chat-header {
+            background-color: var(--dark);
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header #chat-close {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        #chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #f9fafb;
+        }
+        
+        .chat-message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        
+        .chat-message.user {
+            background-color: var(--light-gray);
+            color: var(--dark);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .chat-message.bot {
+            background-color: var(--warning);
+            color: var(--dark);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .chat-message.bot.loading {
+            font-style: italic;
+            color: #555;
+            animation: pulse 1.5s infinite;
+             box-shadow: none;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid var(--light-gray);
+            background-color: #fff;
+        }
+        
+        #chat-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+             background: white;
+             box-shadow: none;
+        }
+        
+        #chat-send {
+            background-color: var(--warning);
+            color: var(--dark);
+            border: none;
+            border-radius: 8px;
+            padding: 0 15px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        #chat-send:hover {
+            background-color: #e6b300;
+        }
+
+        /* [RESPONSIVO] Ajustes finos para Chat em telas pequenas */
+        @media (max-width: 400px) {
+            #chat-modal {
+                width: 95%;
+                right: 2.5%;
+                bottom: 80px;
+                height: 450px;
+            }
+            #chat-fab {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-beer"></i>
+                    <h1>Aderência ao Calendário de Cerveja</h1>
+                </div>
+                <div class="nav-tabs">
+                    <div class="tab active" data-tab="dashboard">Dashboard</div>
+                    <div class="tab" data-tab="loja">Visão Loja</div>
+                    <div class="tab" data-tab="details">Detalhes</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Conteúdo principal (Agora visível por padrão) -->
+        <div id="app-content">
+            <!-- Dashboard Principal -->
+            <div id="dashboard-screen">
+                <div class="card animated-card">
+                    <div class="data-source">
+                        <div class="filter-group">
+                            <label class="filter-label" for="sheets-url">Link CSV da Planilha</label>
+                            <input type="text" id="sheets-url" placeholder="Cole aqui a URL da planilha Google Sheets publicada como CSV" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vR9arc3l-cSWNzjssrAVZ62Ee9BKWAAZWNm27Vxho4eNw7CF_p0dGx6tjJUJQlXZgb1tYRahOZ2UTqi/pub?output=csv">
+                        </div>
+                        <button id="load-data">Carregar Dados</button>
+                    </div>
+                    <div class="filters" style="margin-bottom: 0;">
+                         <div class="filter-group">
+                            <label class="filter-label" for="week-filter-dashboard">Filtrar Dashboard por Semana</label>
+                            <select id="week-filter-dashboard">
+                                <option value="">Todas as semanas (Geral)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard">
+                    <!-- Card de Aderência Total com Animação -->
+                    <div class="card animated-card" style="animation-delay: 0.1s;">
+                        <div class="card-header">
+                            <h2 class="card-title">Aderência Total</h2>
+                        </div>
+                        <div class="kpi-card">
+                             <!-- Texto 3D GEO MG -->
+                            <h3 class="text-3d">GEO MG</h3>
+                            <div class="gauge-container">
+                                <canvas id="gaugeChart"></canvas>
+                            </div>
+                            <div class="kpi-value" id="total-adherence">0%</div>
+                            <div class="kpi-label">Meta: 65%</div>
+                        </div>
+                    </div>
+
+                    <!-- Card Destaque Positivo -->
+                    <div class="card animated-card" style="animation-delay: 0.2s;">
+                        <div class="card-header">
+                            <h2 class="card-title" style="color: var(--success);"><i class="fas fa-rocket"></i>Maiores Impulsionadores</h2>
+                        </div>
+                        <div id="highlight-positive">
+                             <div class="loader"><div class="spinner"></div><p>Aguardando dados...</p></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Destaque Negativo -->
+                    <div class="card animated-card" style="animation-delay: 0.3s;">
+                        <div class="card-header">
+                            <h2 class="card-title" style="color: var(--danger);"><i class="fas fa-lightbulb"></i>Maiores Oportunidades</h2>
+                        </div>
+                        <div id="highlight-negative">
+                             <div class="loader"><div class="spinner"></div><p>Aguardando dados...</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card da Tabela Principal com Animação -->
+                <div class="card animated-card" style="animation-delay: 0.4s;">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-table-list"></i>Visão Geral das Redes</h2>
+                        <button class="export-btn" id="export-dashboard" disabled>
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="networks-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name">Rede</th>
+                                    <th data-sort="adherence">Aderência</th>
+                                    <th data-sort="weight">Peso</th>
+                                    <th data-sort="stores">Lojas</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="networks-table-body">
+                                <tr><td colspan="5" class="loader"><p>Aguardando dados...</p></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="networks-pagination">
+                        <!-- Paginação será gerada via JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- [NOVO] Tela Visão Loja -->
+            <div id="loja-screen" class="hidden">
+                 <!-- Card de Filtros para Visão Loja -->
+                 <div class="card animated-card">
+                     <div class="filters">
+                         <div class="filter-group">
+                            <label class="filter-label" for="network-filter-loja">Filtrar por Rede</label>
+                            <select id="network-filter-loja">
+                                <option value="">Todas as redes</option>
+                            </select>
+                        </div>
+                         <div class="filter-group">
+                            <label class="filter-label" for="week-filter-loja">Filtrar por Semana</label>
+                            <select id="week-filter-loja">
+                                <option value="">Todas as semanas</option>
+                            </select>
+                        </div>
+                     </div>
+                 </div>
+
+                 <!-- [MUDANÇA] Layout de 2 colunas -->
+                 <div class="loja-dashboard">
+                     <div class="card animated-card" style="animation-delay: 0.1s;">
+                         <div class="card-header">
+                             <h2 class="card-title" style="color: var(--danger);"><i class="fas fa-store-slash"></i>Lojas Detratoras (Pior Aderência)</h2>
+                         </div>
+                         <div class="table-responsive">
+                             <table id="detractor-stores-table">
+                                 <thead>
+                                     <tr>
+                                         <th style="width: 20px;">#</th>
+                                         <th data-sort="name">Rede</th>
+                                         <th data-sort="store">CNPJ (Loja)</th>
+                                         <th data-sort="adherence">Aderência</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody id="detractor-stores-body">
+                                     <tr><td colspan="4" class="loader"><p>Aguardando dados...</p></td></tr>
+                                 </tbody>
+                             </table>
+                         </div>
+                     </div>
+                     
+                     <!-- [MUDANÇA] Card único para SKUs -->
+                     <div class="card animated-card" style="animation-delay: 0.2s;">
+                         <div class="card-header">
+                             <h2 class="card-title" style="color: var(--success);"><i class="fas fa-star"></i>SKUs Ativados (TTC OK)</h2>
+                         </div>
+                         <div class="table-responsive">
+                             <table id="activation-skus-table">
+                                 <thead>
+                                     <tr>
+                                         <th style="width: 20px;">#</th>
+                                         <th data-sort="product">Produto</th>
+                                         <th data-sort="ttcOk">Total "TTC OK"</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody id="activation-skus-body">
+                                     <tr><td colspan="3" class="loader"><p>Aguardando dados...</p></td></tr>
+                                 </tbody>
+                             </table>
+                         </div>
+                         
+                         <div class="card-header" style="margin-top: 20px;">
+                             <h2 class="card-title" style="color: var(--gray);"><i class="fas fa-exclamation-triangle"></i>SKUs Não Ativados</h2>
+                         </div>
+                         <div class="table-responsive">
+                             <table id="non-activation-skus-table">
+                                 <thead>
+                                     <tr>
+                                         <th style="width: 20px;">#</th>
+                                         <th data-sort="product">Produto</th>
+                                         <th data-sort="ttcNotOk">Total Planejado (Não Ativado)</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody id="non-activation-skus-body">
+                                     <tr><td colspan="3" class="loader"><p>Aguardando dados...</p></td></tr>
+                                 </tbody>
+                             </table>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+
+
+            <!-- Tela de Detalhes -->
+            <div id="details-screen" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-search-plus"></i>Detalhes por Rede e Loja</h2>
+                    </div>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label class="filter-label" for="network-filter">Filtrar por Rede</label>
+                            <select id="network-filter">
+                                <option value="">Todas as redes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="region-filter">Filtrar por Região</label>
+                            <select id="region-filter">
+                                <option value="">Todas as regiões</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="channel-filter">Filtrar por Canal</label>
+                            <select id="channel-filter">
+                                <option value="">Todos os canais</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="product-filter">Filtrar por Produto</label>
+                            <select id="product-filter">
+                                <option value="">Todos os produtos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="week-filter">Semana (Nielsen)</label>
+                            <select id="week-filter">
+                                <option value="">Todas as semanas</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="display: flex; align-items: flex-end;">
+                            <button class="export-btn" id="export-details" disabled>
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="details-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="network">Rede</th>
+                                    <th data-sort="store">CNPJ (Loja)</th>
+                                    <th data-sort="product">Produto</th>
+                                    <th data-sort="ttcOk">TTC OK</th>
+                                    <th data-sort="ttcBelow">TTC Abaixo</th>
+                                    <th data-sort="ttcAbove">TTC Acima</th>
+                                    <th data-sort="adherence">Aderência</th>
+                                    <th data-sort="region">Região</th>
+                                    <th data-sort="channel">Canal</th>
+                                    <th data-sort="weekStart">Data Início</th>
+                                    <th data-sort="weekEnd">Data Fim</th>
+                                </tr>
+                            </thead>
+                            <tbody id="details-table-body">
+                                <tr><td colspan="11" class="loader"><p>Aguardando dados...</p></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="details-pagination">
+                        <!-- Paginação será gerada via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>Off Trade Ambev - Aderência ao Calendário de Cerveja</div>
+                <div>© 2024 - Todos os direitos reservados</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chat IA FAB (Floating Action Button) -->
+    <div id="chat-fab" title="Analisar Dados com IA">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <!-- Chat IA Modal -->
+    <div id="chat-modal" class="hidden">
+        <div class="chat-header">
+            <span>Analista de IA</span>
+            <span id="chat-close"><i class="fas fa-times"></i></span>
+        </div>
+        <div id="chat-messages">
+            <div class="chat-message bot">Olá! Carregue os dados e faça uma pergunta sobre a aderência.</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Pergunte sobre os dados...">
+            <button id="chat-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+
+    <script>
+        
+        // --- Plugin do ponteiro do velocímetro ---
+        const gaugeNeedle = {
+            id: 'gaugeNeedle',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, data } = chart;
+                ctx.save();
+                
+                const value = options.value;
+                const meta = options.meta;
+                const max = 100;
+                
+                const angle = Math.PI + (1 / max * value * Math.PI);
+                const metaAngle = Math.PI + (1 / max * meta * Math.PI);
+                
+                const cx = chart.getDatasetMeta(0).data[0].x;
+                const cy = chart.getDatasetMeta(0).data[0].y;
+                const outerRadius = chart.getDatasetMeta(0).data[0].outerRadius;
+                
+                // --- Desenhar Ponteiro ---
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(0, -8);
+                ctx.lineTo(outerRadius - 20, 0);
+                ctx.lineTo(0, 8);
+                ctx.fillStyle = '#444';
+                ctx.fill();
+                ctx.rotate(-angle);
+                
+                // --- Desenhar Círculo central ---
+                ctx.beginPath();
+                ctx.arc(0, 0, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#666';
+                ctx.fill();
+                ctx.translate(-cx, -cy);
+                ctx.restore();
+                
+                // --- Desenhar Marca da Meta ---
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(metaAngle);
+                ctx.beginPath();
+                ctx.moveTo(outerRadius - 12, 0);
+                ctx.lineTo(outerRadius - 2, 0);
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.rotate(-metaAngle);
+                ctx.translate(-cx, -cy);
+                ctx.restore();
+            }
+        };
+
+        // --- Estado Global da Aplicação ---
+        let appState = {
+            currentScreen: 'dashboard',
+            currentPage: {
+                networks: 1,
+                details: 1
+            },
+            itemsPerPage: 10,
+            sort: {
+                networks: { key: 'weight', asc: false },
+                details: { key: 'adherence', asc: false },
+                detractorStores: { key: 'adherence', asc: true },
+                activationSkus: { key: 'ttcOk', asc: false },
+                nonActivationSkus: { key: 'ttcNotOk', asc: false }
+            },
+            allData: [],
+            storeWeightMap: new Map(),
+            totalGlobalLojas: 0,
+            processedData: {
+                totalAdherence: 0,
+                networks: [],
+                stores: [],
+                filters: {
+                    networks: [],
+                    regions: [],
+                    channels: [],
+                    products: [],
+                    weeks: []
+                },
+                latestWeekEnd: null,
+                detractorStores: [],
+                activationSkus: [],
+                nonActivationSkus: []
+            },
+            filteredDetails: [],
+            selectedNetwork: '',
+            selectedRegion: '',
+            selectedChannel: '',
+            selectedProduct: '',
+            selectedWeek: '',
+            selectedNetworkLoja: '',
+            selectedWeekLoja: ''
+        };
+
+        let gaugeChartInstance = null;
+        const META = 65.0;
+
+        // --- Elementos DOM ---
+        const appContent = document.getElementById('app-content');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const detailsScreen = document.getElementById('details-screen');
+        const lojaScreen = document.getElementById('loja-screen');
+        const tabButtons = document.querySelectorAll('.tab[data-tab]');
+        const totalAdherenceElement = document.getElementById('total-adherence');
+        //const progressFillElement = document.getElementById('progress-fill');
+        const lastUpdateElement = document.getElementById('last-update');
+        const highlightPositiveElement = document.getElementById('highlight-positive');
+        const highlightNegativeElement = document.getElementById('highlight-negative');
+        const networksTableBody = document.getElementById('networks-table-body');
+        const networksPagination = document.getElementById('networks-pagination');
+        const detailsTableBody = document.getElementById('details-table-body');
+        const detailsPagination = document.getElementById('details-pagination');
+        const detractorStoresBody = document.getElementById('detractor-stores-body');
+        const activationSkusBody = document.getElementById('activation-skus-body');
+        const nonActivationSkusBody = document.getElementById('non-activation-skus-body');
+        
+        const networkFilter = document.getElementById('network-filter');
+        const regionFilter = document.getElementById('region-filter');
+        const channelFilter = document.getElementById('channel-filter');
+        const productFilter = document.getElementById('product-filter');
+        const weekFilter = document.getElementById('week-filter');
+        const weekFilterDashboard = document.getElementById('week-filter-dashboard');
+        const networkFilterLoja = document.getElementById('network-filter-loja');
+        const weekFilterLoja = document.getElementById('week-filter-loja');
+        
+        const exportDashboardButton = document.getElementById('export-dashboard');
+        const exportDetailsButton = document.getElementById('export-details');
+        const sheetsUrlInput = document.getElementById('sheets-url');
+        const loadDataButton = document.getElementById('load-data');
+        
+        const chatFab = document.getElementById('chat-fab');
+        const chatModal = document.getElementById('chat-modal');
+        const chatClose = document.getElementById('chat-close');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Eventos
+            tabButtons.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
+            });
+            
+            [networkFilter, regionFilter, channelFilter, productFilter, weekFilter].forEach(filter => {
+                filter.addEventListener('change', handleDetailFilterChange);
+            });
+            weekFilterDashboard.addEventListener('change', handleDashboardFilterChange);
+            networkFilterLoja.addEventListener('change', handleLojaFilterChange);
+            weekFilterLoja.addEventListener('change', handleLojaFilterChange);
+
+            
+            exportDashboardButton.addEventListener('click', exportDashboard);
+            exportDetailsButton.addEventListener('click', exportDetails);
+            
+            loadDataButton.addEventListener('click', loadDataFromSheets);
+
+            document.querySelectorAll('#networks-table thead th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => sortTable('networks', th.dataset.sort));
+            });
+            document.querySelectorAll('#details-table thead th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => sortTable('details', th.dataset.sort));
+            });
+             document.querySelectorAll('#detractor-stores-table thead th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => sortTable('detractorStores', th.dataset.sort));
+            });
+             document.querySelectorAll('#activation-skus-table thead th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => sortTable('activationSkus', th.dataset.sort));
+            });
+             document.querySelectorAll('#non-activation-skus-table thead th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => sortTable('nonActivationSkus', th.dataset.sort));
+            });
+            
+            chatFab.addEventListener('click', () => chatModal.classList.remove('hidden'));
+            chatClose.addEventListener('click', () => chatModal.classList.add('hidden'));
+            chatSend.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSendMessage();
+            });
+
+            
+            updateScreenVisibility();
+            initializeGaugeChart(); 
+            updateSortIndicators('networks');
+            
+            if(highlightPositiveElement) highlightPositiveElement.innerHTML = `<div class="loader"><p>Aguardando dados...</p></div>`;
+            if(highlightNegativeElement) highlightNegativeElement.innerHTML = `<div class="loader"><p>Aguardando dados...</p></div>`;
+        });
+
+        // --- Navegação ---
+        function switchTab(tabName) {
+            tabButtons.forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
+            });
+            
+            appState.currentScreen = tabName;
+            updateScreenVisibility();
+            
+             if(tabName === 'loja') {
+                  renderLojaScreenTables();
+                  document.querySelectorAll('#loja-screen .animated-card').forEach((card, index) => {
+                        card.style.animation = 'none';
+                        void card.offsetWidth;
+                        card.style.animation = `slide-up-fade-in 0.5s ease-out ${index * 100}ms forwards`;
+                    });
+             }
+        }
+
+        function updateScreenVisibility() {
+            dashboardScreen.classList.toggle('hidden', appState.currentScreen !== 'dashboard');
+            detailsScreen.classList.toggle('hidden', appState.currentScreen !== 'details');
+            lojaScreen.classList.toggle('hidden', appState.currentScreen !== 'loja');
+        }
+
+        // --- Carregamento e Processamento ---
+        
+        function loadDataFromSheets() {
+            if (typeof Papa === 'undefined') {
+                alert('ERRO CRÍTICO: A biblioteca de leitura (PapaParse) não conseguiu carregar.');
+                setLoading(false);
+                return;
+            }
+
+            const sheetsUrl = sheetsUrlInput.value.trim();
+            
+            if (!sheetsUrl || !sheetsUrl.includes('pub?output=csv')) {
+                 if (sheetsUrl.includes('/edit')) {
+                    alert('Erro: Parece que você colou o link de edição. Você precisa publicar a planilha na web como CSV.\n\nVá em: Arquivo > Compartilhar > Publicar na web > [Escolha a aba] > Publicar como CSV.');
+                 } else {
+                    alert('Por favor, insira uma URL do Google Sheets válida (publicada como CSV).');
+                 }
+                return;
+            }
+            
+            setLoading(true, 'Carregando dados do Google Sheets...');
+            
+            document.querySelectorAll('.animated-card').forEach(c => {
+                c.style.opacity = 0;
+                c.style.animation = 'none'; // Reseta animação
+            });
+
+            Papa.parse(sheetsUrl, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: (results) => {
+                    console.log("Dados brutos recebidos:", results.data);
+                    appState.allData = results.data;
+                    
+                    calculateGlobalWeights(appState.allData); 
+                    
+                    processAllData(appState.allData); 
+                    setLoading(false);
+                    addChatMessage('Dados carregados! Agora você pode fazer perguntas.', 'bot');
+                    
+                    document.querySelectorAll('#dashboard-screen .animated-card').forEach((card, index) => {
+                         void card.offsetWidth; // Força reflow
+                        card.style.animation = `slide-up-fade-in 0.5s ease-out ${index * 100}ms forwards`;
+                    });
+                },
+                error: (err) => {
+                    console.error('Erro ao buscar dados:', err);
+                    alert('Erro ao carregar dados. Verifique o link e se a planilha está publicada corretamente.');
+                    setLoading(false);
+                }
+            });
+        }
+        
+        function calculateGlobalWeights(allData) {
+             const lojasUnicasGlobais = new Map();
+             const redesGlobaisMap = new Map();
+             
+             allData.forEach(row => {
+                 const rede = row.REDE ? String(row.REDE) : null;
+                 const loja = row.CNPJ ? String(row.CNPJ) : null;
+                 if (!rede || !loja) return;
+                 
+                 const lojaId = `${rede}-${loja}`;
+                 if (!lojasUnicasGlobais.has(lojaId)) {
+                     lojasUnicasGlobais.set(lojaId, true);
+                     
+                     if (!redesGlobaisMap.has(rede)) {
+                         redesGlobaisMap.set(rede, { name: rede, countLojas: 0 });
+                     }
+                     redesGlobaisMap.get(rede).countLojas += 1;
+                 }
+             });
+             
+             appState.totalGlobalLojas = lojasUnicasGlobais.size;
+             appState.storeWeightMap = redesGlobaisMap;
+             
+             console.log("Peso global calculado. Total de lojas:", appState.totalGlobalLojas);
+        }
+
+        function setLoading(isLoading, message = 'Carregando...') {
+             const loaderHtml = `<div class="loader"><div class="spinner"></div><p>${message}</p></div>`;
+             if (isLoading) {
+                 if(highlightPositiveElement) highlightPositiveElement.innerHTML = loaderHtml;
+                 if(highlightNegativeElement) highlightNegativeElement.innerHTML = loaderHtml;
+                 networksTableBody.innerHTML = `<tr><td colspan="5" class="loader"><p>${message}</p></td></tr>`;
+                 detailsTableBody.innerHTML = `<tr><td colspan="11" class="loader"><p>${message}</p></td></tr>`;
+                 if (detractorStoresBody) detractorStoresBody.innerHTML = `<tr><td colspan="4" class="loader"><p>${message}</p></td></tr>`;
+                 if (activationSkusBody) activationSkusBody.innerHTML = `<tr><td colspan="3" class="loader"><p>${message}</p></td></tr>`;
+                 if (nonActivationSkusBody) nonActivationSkusBody.innerHTML = `<tr><td colspan="3" class="loader"><p>${message}</p></td></tr>`;
+                 
+                 totalAdherenceElement.textContent = '...';
+                 exportDashboardButton.disabled = true;
+                 exportDetailsButton.disabled = true;
+             }
+        }
+        
+        function processAllData(data) {
+            console.log(`Processando ${data.length} linhas...`);
+            const lojasMap = new Map();
+            const redesMap = new Map();
+            
+            const uniqueRegions = new Set();
+            const uniqueChannels = new Set();
+            const uniqueNetworks = new Set();
+            const uniqueProducts = new Set();
+            const uniqueWeeks = new Set();
+            let latestWeekEnd = null;
+
+            appState.processedData.stores = [];
+            appState.processedData.networks = [];
+            let isFirstLoad = appState.processedData.filters.networks.length === 0;
+
+            data.forEach(row => {
+                const rede = row.REDE ? String(row.REDE) : null;
+                const loja = row.CNPJ ? String(row.CNPJ) : null;
+                if (!rede || !loja) return;
+
+                const weekStart = row['DATA INÍCIO SEMANA NIELSEN'] ? String(row['DATA INÍCIO SEMANA NIELSEN']) : '';
+                const weekEnd = row['DATA FIM SEMANA NIELSEN'] ? String(row['DATA FIM SEMANA NIELSEN']) : '';
+                const produto = row.PRODUTO ? String(row.PRODUTO) : null;
+
+                if (isFirstLoad) {
+                    if(row.MICROREGIAO) uniqueRegions.add(String(row.MICROREGIAO));
+                    if(row.CANAL) uniqueChannels.add(String(row.CANAL));
+                    if(rede) uniqueNetworks.add(rede);
+                    if(produto) uniqueProducts.add(produto);
+                    if(weekStart) uniqueWeeks.add(weekStart);
+                }
+                
+                if (isFirstLoad && weekEnd) {
+                     try {
+                         const dateStr = String(weekEnd).includes('/') ? weekEnd : weekEnd.replace(/-/g, '/');
+                         const parts = dateStr.split('/');
+                         let currentDate;
+                         if (parts.length === 3 && parts[0].length <= 2) { 
+                             if (parts[1].length > 2) { 
+                                  currentDate = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`);
+                             } else { 
+                                  currentDate = new Date(dateStr);
+                             }
+                         } else {
+                             currentDate = new Date(dateStr);
+                         }
+
+                         if (!isNaN(currentDate.getTime())) {
+                            if (!latestWeekEnd || currentDate > latestWeekEnd) {
+                                latestWeekEnd = currentDate;
+                            }
+                         }
+                     } catch (e) { console.warn("Formato de data inválido:", weekEnd); }
+                }
+
+
+                const lojaId = `${rede}-${loja}`;
+                const ttcOK = Number(row['TTC OK']) || 0;
+                const ttcAcima = Number(row['TTC ACIMA']) || 0;
+                const ttcAbaixo = Number(row['TTC ABAIXO']) || 0;
+                const totalSKUs = ttcOK + ttcAcima + ttcAbaixo;
+                
+                if (totalSKUs > 0) {
+                     const aderenciaSKU = (ttcOK / totalSKUs);
+                     appState.processedData.stores.push({
+                        network: rede,
+                        store: loja, // CNPJ
+                        product: produto || '',
+                        ttcOk: ttcOK,
+                        ttcBelow: ttcAbaixo,
+                        ttcAbove: ttcAcima,
+                        adherence: aderenciaSKU * 100,
+                        region: String(row.MICROREGIAO || ''),
+                        channel: String(row.CANAL || ''),
+                        weekStart: weekStart,
+                        weekEnd: weekEnd
+                    });
+                }
+                
+                if (!lojasMap.has(lojaId)) {
+                    lojasMap.set(lojaId, {
+                        rede: rede,
+                        loja: loja, // CNPJ
+                        ttcOK: 0,
+                        totalSKUs: 0
+                    });
+                }
+                const lojaData = lojasMap.get(lojaId);
+                lojaData.ttcOK += ttcOK;
+                lojaData.totalSKUs += totalSKUs;
+            });
+
+            const totalLojasUnicas = lojasMap.size;
+            console.log("Total de lojas únicas (na semana selecionada):", totalLojasUnicas);
+            
+            lojasMap.forEach(lojaData => {
+                const aderenciaLoja = (lojaData.totalSKUs > 0) ? (lojaData.ttcOK / lojaData.totalSKUs) : 0; 
+                lojaData.aderencia = aderenciaLoja;
+                
+                if (!redesMap.has(lojaData.rede)) {
+                    redesMap.set(lojaData.rede, {
+                        name: lojaData.rede,
+                        somaAderencia: 0,
+                        countLojas: 0
+                    });
+                }
+                const redeData = redesMap.get(lojaData.rede);
+                redeData.somaAderencia += aderenciaLoja;
+                redeData.countLojas += 1;
+            });
+
+            let aderenciaTotalPonderada = 0;
+
+            appState.storeWeightMap.forEach((redeGlobal, redeName) => {
+                 const redeAtual = redesMap.get(redeName);
+                 let aderenciaRede = 0;
+                 let countLojasAtual = 0;
+                 
+                 if (redeAtual) {
+                     aderenciaRede = (redeAtual.countLojas > 0) ? (redeAtual.somaAderencia / redeAtual.countLojas) : 0;
+                     countLojasAtual = redeAtual.countLojas;
+                 }
+                 
+                 const pesoRede = (appState.totalGlobalLojas > 0) ? (redeGlobal.countLojas / appState.totalGlobalLojas) : 0;
+                 
+                 aderenciaTotalPonderada += (aderenciaRede * pesoRede);
+
+                 appState.processedData.networks.push({
+                    name: redeName,
+                    adherence: aderenciaRede * 100,
+                    weight: pesoRede * 100,
+                    stores: redeGlobal.countLojas,
+                    impact: (aderenciaRede - (META / 100)) * pesoRede * 100 
+                });
+            });
+
+
+            appState.processedData.totalAdherence = aderenciaTotalPonderada * 100;
+            
+            if (isFirstLoad) {
+                appState.processedData.filters.networks = [...uniqueNetworks].sort();
+                appState.processedData.filters.regions = [...uniqueRegions].sort();
+                appState.processedData.filters.channels = [...uniqueChannels].sort();
+                appState.processedData.filters.products = [...uniqueProducts].sort();
+                appState.processedData.filters.weeks = [...uniqueWeeks].sort();
+                appState.processedData.latestWeekEnd = latestWeekEnd;
+                
+                updateFiltersUI();
+            }
+
+            console.log("Processamento concluído. Aderência Total:", appState.processedData.totalAdherence);
+            
+            exportDashboardButton.disabled = false;
+            exportDetailsButton.disabled = false;
+            
+            handleDetailFilterChange();
+            renderDashboard();
+        }
+
+        
+        // --- Funções de Renderização da UI ---
+        
+        function updateFiltersUI() {
+             const populateSelect = (selectEl, options) => {
+                 selectEl.innerHTML = `<option value="">Todas</option>`;
+                 options.forEach(opt => {
+                     if(opt) {
+                        selectEl.appendChild(new Option(opt, opt));
+                     }
+                 });
+             };
+             
+             populateSelect(networkFilter, appState.processedData.filters.networks);
+             populateSelect(regionFilter, appState.processedData.filters.regions);
+             populateSelect(channelFilter, appState.processedData.filters.channels);
+             populateSelect(productFilter, appState.processedData.filters.products);
+             populateSelect(weekFilter, appState.processedData.filters.weeks);
+             populateSelect(weekFilterDashboard, appState.processedData.filters.weeks);
+             populateSelect(networkFilterLoja, appState.processedData.filters.networks);
+             populateSelect(weekFilterLoja, appState.processedData.filters.weeks);
+        }
+
+        function handleDashboardFilterChange() {
+             const selectedWeek = weekFilterDashboard.value;
+             setLoading(true, `Recalculando para semana ${selectedWeek || 'Geral'}...`);
+             
+             let dataToProcess = appState.allData;
+             
+             if (selectedWeek !== '') {
+                 dataToProcess = appState.allData.filter(row => String(row['DATA INÍCIO SEMANA NIELSEN']) === selectedWeek);
+             }
+             
+             processAllData(dataToProcess);
+             setLoading(false);
+        }
+
+        function handleDetailFilterChange() {
+            appState.selectedNetwork = networkFilter.value;
+            appState.selectedRegion = regionFilter.value;
+            appState.selectedChannel = channelFilter.value;
+            appState.selectedProduct = productFilter.value;
+            appState.selectedWeek = weekFilter.value;
+            
+            appState.filteredDetails = appState.processedData.stores.filter(store => {
+                return (appState.selectedNetwork === '' || store.network === appState.selectedNetwork) &&
+                       (appState.selectedRegion === '' || store.region === appState.selectedRegion) &&
+                       (appState.selectedChannel === '' || store.channel === appState.selectedChannel) &&
+                       (appState.selectedProduct === '' || store.product === appState.selectedProduct) &&
+                       (appState.selectedWeek === '' || store.weekStart === appState.selectedWeek);
+            });
+            
+            appState.currentPage.details = 1;
+            renderDetails();
+        }
+        
+        function handleLojaFilterChange() {
+            appState.selectedNetworkLoja = networkFilterLoja.value;
+            appState.selectedWeekLoja = weekFilterLoja.value;
+            
+            renderLojaScreenTables();
+        }
+
+        
+        function renderDashboard() {
+            const adherence = appState.processedData.totalAdherence;
+            
+            const selectedWeek = weekFilterDashboard.value;
+            
+            renderHighlightCards();
+            renderNetworksTable();
+            renderGaugeChart(adherence);
+            
+            renderLojaScreenTables(); // Renderiza dados da visão loja (para IA)
+        }
+        
+        function renderHighlightCards() {
+            const { networks } = appState.processedData;
+            if (networks.length === 0) {
+                 if(highlightPositiveElement) highlightPositiveElement.innerHTML = `<div class="loader"><p>Sem dados.</p></div>`;
+                 if(highlightNegativeElement) highlightNegativeElement.innerHTML = `<div class="loader"><p>Sem dados.</p></div>`;
+                 return;
+            }
+
+            const top5ByWeight = [...networks].sort((a, b) => b.weight - a.weight).slice(0, 5);
+
+            const destaquesPositivos = [...top5ByWeight].sort((a, b) => b.adherence - a.adherence).slice(0, 3);
+            const destaquesNegativos = [...top5ByWeight].sort((a, b) => a.adherence - b.adherence).slice(0, 3);
+
+            if (highlightPositiveElement) {
+                let positiveHtml = `<div class="highlight-card highlight-positive"><div class="highlight-title">Maiores Impulsionadores</div>`;
+                destaquesPositivos.forEach((net, index) => {
+                    positiveHtml += `
+                        <div class="rank-item">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-weight: bold; color: var(--dark); min-width: 28px;">${index + 1}º</span>
+                                <span class="rank-item-name" title="${net.name}">${net.name}</span>
+                            </div>
+                            <span class="positive rank-item-value">${net.adherence.toFixed(1)}%</span>
+                        </div>
+                    `;
+                });
+                positiveHtml += '</div>';
+                highlightPositiveElement.innerHTML = positiveHtml;
+            }
+            
+             if (highlightNegativeElement) {
+                let negativeHtml = '<div class="highlight-card highlight-negative"><div class="highlight-title">Maiores Oportunidades</div>';
+                destaquesNegativos.forEach((net, index) => {
+                    negativeHtml += `
+                        <div class="rank-item">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-weight: bold; color: var(--dark); min-width: 28px;">${index + 1}º</span>
+                                <span class="rank-item-name" title="${net.name}">${net.name}</span>
+                            </div>
+                            <span class="negative rank-item-value">${net.adherence.toFixed(1)}%</span>
+                        </div>
+                    `;
+                });
+                negativeHtml += '</div>';
+                highlightNegativeElement.innerHTML = negativeHtml;
+            }
+        }
+
+
+        function renderNetworksTable() {
+            const { networks } = appState.processedData;
+            const { key, asc } = appState.sort.networks;
+            
+            const sortedNetworks = [...networks].sort((a, b) => {
+                 if (a[key] < b[key]) return asc ? -1 : 1;
+                 if (a[key] > b[key]) return asc ? 1 : -1;
+                 return 0;
+            });
+            
+            const startIndex = (appState.currentPage.networks - 1) * appState.itemsPerPage;
+            const endIndex = startIndex + appState.itemsPerPage;
+            const networksToShow = sortedNetworks.slice(startIndex, endIndex);
+            
+            if (networksToShow.length === 0) {
+                 networksTableBody.innerHTML = `<tr><td colspan="5" class="loader"><p>Sem dados para exibir.</p></td></tr>`;
+                 networksPagination.innerHTML = '';
+                 return;
+            }
+
+            let html = '';
+            networksToShow.forEach(network => {
+                let statusClass = 'neutral';
+                let statusIcon = 'fa-minus-circle';
+                
+                if (network.adherence >= META) {
+                     statusClass = 'positive';
+                     statusIcon = 'fa-check-circle';
+                }
+                if (network.adherence < META - 15) {
+                     statusClass = 'negative';
+                     statusIcon = 'fa-times-circle';
+                }
+                
+                html += `
+                    <tr class="table-row-clickable" data-network-name="${network.name}" style="cursor: pointer;">
+                        <td>${network.name}</td>
+                        <td>
+                            <div class="data-bar-container">
+                                <div class="data-bar-fill ${statusClass}" style="--data-width: ${network.adherence.toFixed(1)}%;"></div>
+                                <span class="data-bar-text ${statusClass}">${network.adherence.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td>
+                             <div class="data-bar-container">
+                                <div class="data-bar-fill" style="--data-width: ${network.weight.toFixed(1)}%; background-color: var(--gray);"></div>
+                                <span class="data-bar-text">${network.weight.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td>${network.stores}</td>
+                        <td><span class="${statusClass}"><i class="fas ${statusIcon} status-icon"></i></span></td>
+                    </tr>
+                `;
+            });
+            
+            networksTableBody.innerHTML = html;
+            
+            networksTableBody.querySelectorAll('.table-row-clickable').forEach(row => {
+                 row.addEventListener('click', () => {
+                     const networkName = row.dataset.networkName;
+                     networkFilter.value = networkName;
+                     handleDetailFilterChange();
+                     switchTab('details');
+                 });
+            });
+            
+            renderPagination(networksPagination, networks.length, appState.currentPage.networks, 'networks');
+            updateSortIndicators('networks');
+        }
+
+        function renderDetails() {
+            const { filteredDetails } = appState;
+            const { key, asc } = appState.sort.details;
+            
+            const sortedDetails = [...filteredDetails].sort((a, b) => {
+                 if (a[key] < b[key]) return asc ? -1 : 1;
+                 if (a[key] > b[key]) return asc ? 1 : -1;
+                 return 0;
+            });
+
+            const startIndex = (appState.currentPage.details - 1) * appState.itemsPerPage;
+            const endIndex = startIndex + appState.itemsPerPage;
+            const storesToShow = sortedDetails.slice(startIndex, endIndex);
+            
+            if (storesToShow.length === 0) {
+                 detailsTableBody.innerHTML = `<tr><td colspan="11" class="loader"><p>Sem dados para exibir com os filtros atuais.</p></td></tr>`;
+                 detailsPagination.innerHTML = '';
+                 return;
+            }
+
+            let html = '';
+            storesToShow.forEach(store => {
+                const adherence = store.adherence;
+                
+                let statusClass = 'neutral';
+                let statusIcon = 'fa-minus-circle';
+                if (adherence >= META) {
+                     statusClass = 'positive';
+                     statusIcon = 'fa-check-circle';
+                }
+                if (adherence < META - 15) {
+                     statusClass = 'negative';
+                     statusIcon = 'fa-times-circle';
+                }
+                
+                html += `
+                    <tr>
+                        <td>${store.network}</td>
+                        <td>${store.store}</td>
+                        <td>${store.product}</td>
+                        <td>${store.ttcOk}</td>
+                        <td>${store.ttcBelow}</td>
+                        <td>${store.ttcAbove}</td>
+                        <td>
+                            <div class="data-bar-container">
+                                <div class="data-bar-fill ${statusClass}" style="--data-width: ${adherence.toFixed(1)}%;"></div>
+                                <span class="data-bar-text ${statusClass}">
+                                    <i class="fas ${statusIcon} status-icon"></i>
+                                    ${adherence.toFixed(1)}%
+                                </span>
+                            </div>
+                        </td>
+                        <td>${store.region}</td>
+                        <td>${store.channel}</td>
+                        <td>${store.weekStart}</td>
+                        <td>${store.weekEnd}</td>
+                    </tr>
+                `;
+            });
+            
+            detailsTableBody.innerHTML = html;
+            renderPagination(detailsPagination, filteredDetails.length, appState.currentPage.details, 'details');
+            updateSortIndicators('details');
+        }
+
+        // --- Funções para Visão Loja ---
+        function renderLojaScreenTables() {
+            const selectedWeek = weekFilterLoja.value;
+            const selectedNetwork = networkFilterLoja.value;
+
+            let dataToProcess = appState.allData;
+            if (selectedWeek) {
+                 dataToProcess = dataToProcess.filter(row => String(row['DATA INÍCIO SEMANA NIELSEN']) === selectedWeek);
+            }
+            if (selectedNetwork) {
+                 dataToProcess = dataToProcess.filter(row => String(row.REDE) === selectedNetwork);
+            }
+            
+            const lojasMap = new Map();
+            const skusMap = new Map();
+            
+            dataToProcess.forEach(row => {
+                const loja = row.CNPJ ? String(row.CNPJ) : null;
+                const rede = row.REDE ? String(row.REDE) : null;
+                if (!loja || !rede) return;
+
+                const lojaId = `${rede}-${loja}`;
+                const ttcOK = Number(row['TTC OK']) || 0;
+                const ttcAcima = Number(row['TTC ACIMA']) || 0;
+                const ttcAbaixo = Number(row['TTC ABAIXO']) || 0;
+                const totalSKUs = ttcOK + ttcAcima + ttcAbaixo;
+                const produto = row.PRODUTO ? String(row.PRODUTO) : null;
+
+                if (!lojasMap.has(lojaId)) {
+                    lojasMap.set(lojaId, { name: rede, store: loja, ttcOK: 0, totalSKUs: 0 });
+                }
+                const lojaData = lojasMap.get(lojaId);
+                lojaData.ttcOK += ttcOK;
+                lojaData.totalSKUs += totalSKUs;
+                
+                if (produto) {
+                    if (!skusMap.has(produto)) {
+                        skusMap.set(produto, { ttcOK: 0, ttcTotal: 0 });
+                    }
+                    skusMap.get(produto).ttcOK += ttcOK;
+                    skusMap.get(produto).ttcTotal += totalSKUs;
+                }
+            });
+            
+            const detractorStores = [];
+            lojasMap.forEach(lojaData => {
+                const aderenciaLoja = (lojaData.totalSKUs > 0) ? (lojaData.ttcOK / lojaData.totalSKUs) * 100 : 0;
+                detractorStores.push({
+                    name: lojaData.name,
+                    store: lojaData.store, // [CORREÇÃO] Passando o CNPJ (loja)
+                    adherence: aderenciaLoja
+                });
+            });
+            appState.processedData.detractorStores = detractorStores
+                .sort((a, b) => a.adherence - b.adherence);
+            
+            const activationSkus = [];
+            const nonActivationSkus = [];
+            skusMap.forEach((data, produto) => {
+                if (data.ttcOK > 0) {
+                    activationSkus.push({ product: produto, ttcOk: data.ttcOK });
+                } else if (data.ttcTotal > 0) {
+                    nonActivationSkus.push({ product: produto, ttcNotOk: data.ttcTotal });
+                }
+            });
+            appState.processedData.activationSkus = activationSkus
+                .sort((a, b) => b.ttcOk - a.ttcOk);
+            appState.processedData.nonActivationSkus = nonActivationSkus
+                .sort((a, b) => b.ttcNotOk - a.ttcNotOk); 
+
+            renderDetractorStores();
+            renderActivationSkus();
+            renderNonActivationSkus();
+        }
+
+        function renderDetractorStores() {
+            const { detractorStores } = appState.processedData;
+            detractorStoresBody.innerHTML = '';
+            if (detractorStores.length === 0) {
+                detractorStoresBody.innerHTML = `<tr><td colspan="4" class="loader"><p>Sem dados para os filtros.</p></td></tr>`;
+                return;
+            }
+            let rank = 0;
+            detractorStores.forEach((store) => {
+                // [MUDANÇA] Mostra todas as lojas, não apenas 0%
+                rank++;
+                const row = document.createElement('tr');
+                let aderenciaClass = store.adherence >= META ? 'positive' : (store.adherence < (META - 15) ? 'negative' : 'neutral');
+                
+                row.innerHTML = `
+                    <td style="font-weight: bold;">${rank}</td>
+                    <td>${store.name}</td>
+                    <td>${store.store}</td> <!-- [CORREÇÃO] Deve mostrar o CNPJ -->
+                    <td class="${aderenciaClass}" style="font-weight: bold;">${store.adherence.toFixed(1)}%</td>
+                `;
+                detractorStoresBody.appendChild(row);
+            });
+             if (rank === 0) {
+                 detractorStoresBody.innerHTML = `<tr><td colspan="4" class="loader"><p>Nenhuma loja encontrada.</p></td></tr>`;
+             }
+        }
+
+        function renderActivationSkus() {
+            const { activationSkus } = appState.processedData;
+            activationSkusBody.innerHTML = '';
+            if (activationSkus.length === 0) {
+                activationSkusBody.innerHTML = `<tr><td colspan="3" class="loader"><p>Sem dados para os filtros.</p></td></tr>`;
+                return;
+            }
+            activationSkus.forEach((sku, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: bold;">${index + 1}º</td>
+                    <td class="rank-item-product" title="${sku.product}">${sku.product}</td>
+                    <td class="positive" style="font-weight: bold;">${sku.ttcOk}</td>
+                `;
+                activationSkusBody.appendChild(row);
+            });
+        }
+        
+        function renderNonActivationSkus() {
+            const { nonActivationSkus } = appState.processedData;
+            nonActivationSkusBody.innerHTML = '';
+            if (nonActivationSkus.length === 0) {
+                nonActivationSkusBody.innerHTML = `<tr><td colspan="3" class="loader"><p>Nenhum SKU não ativado.</p></td></tr>`;
+                return;
+            }
+            nonActivationSkus.forEach((sku, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: bold;">${index + 1}º</td>
+                    <td class="rank-item-product" title="${sku.product}">${sku.product}</td>
+                    <td class="negative" style="font-weight: bold;">${sku.ttcNotOk}</td> <!-- [MUDANÇA] Mostra total não ativado -->
+                `;
+                nonActivationSkusBody.appendChild(row);
+            });
+        }
+        
+        function sortTable(tableType, newKey) {
+             if (!appState.sort[tableType]) {
+                 appState.sort[tableType] = { key: newKey, asc: false };
+             }
+             
+             const sortState = appState.sort[tableType];
+             if (sortState.key === newKey) {
+                 sortState.asc = !sortState.asc;
+             } else {
+                 sortState.key = newKey;
+                 // [CORREÇÃO] A ordenação padrão de 'name' e 'product' deve ser asc
+                 sortState.asc = (tableType === 'detractorStores' && newKey === 'adherence') || (newKey === 'name') || (newKey === 'product');
+             }
+             
+             if (tableType === 'networks') {
+                 renderNetworksTable();
+             } else if (tableType === 'details') {
+                 renderDetails();
+             } else if (tableType === 'detractorStores') {
+                 appState.processedData.detractorStores.sort((a, b) => {
+                     if (a[newKey] < b[newKey]) return sortState.asc ? -1 : 1;
+                     if (a[newKey] > b[newKey]) return sortState.asc ? 1 : -1;
+                     return 0;
+                 });
+                 renderDetractorStores();
+                 updateSortIndicators('detractorStores');
+             } else if (tableType === 'activationSkus') {
+                  appState.processedData.activationSkus.sort((a, b) => {
+                     if (a[newKey] < b[newKey]) return sortState.asc ? -1 : 1;
+                     if (a[newKey] > b[newKey]) return sortState.asc ? 1 : -1;
+                     return 0;
+                 });
+                 renderActivationSkus();
+                 updateSortIndicators('activationSkus');
+             } else if (tableType === 'nonActivationSkus') {
+                  appState.processedData.nonActivationSkus.sort((a, b) => {
+                     if (a[newKey] < b[newKey]) return sortState.asc ? -1 : 1;
+                     if (a[newKey] > b[newKey]) return sortState.asc ? 1 : -1;
+                     return 0;
+                 });
+                 renderNonActivationSkus();
+                 updateSortIndicators('nonActivationSkus');
+             }
+        }
+        
+        function updateSortIndicators(tableType) {
+             const { key, asc } = appState.sort[tableType];
+             let tableId = '';
+             if (tableType === 'networks') tableId = '#networks-table';
+             else if (tableType === 'details') tableId = '#details-table';
+             else if (tableType === 'detractorStores') tableId = '#detractor-stores-table';
+             else if (tableType === 'activationSkus') tableId = '#activation-skus-table';
+             else if (tableType === 'nonActivationSkus') tableId = '#non-activation-skus-table';
+             else return;
+             
+             document.querySelectorAll(`${tableId} thead th[data-sort]`).forEach(th => {
+                  th.classList.remove('sort-asc', 'sort-desc');
+                  if(th.dataset.sort === key) {
+                       th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+                  }
+             });
+        }
+
+
+        function renderPagination(container, totalItems, currentPage, pageType) {
+            const totalPages = Math.ceil(totalItems / appState.itemsPerPage);
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}" data-type="${pageType}">Anterior</button>`;
+            
+             const maxPagesToShow = 5;
+             let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+             let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+             if (endPage - startPage + 1 < maxPagesToShow) {
+                 startPage = Math.max(1, endPage - maxPagesToShow + 1);
+             }
+
+             if (startPage > 1) {
+                 html += `<button class="page-btn" data-page="1" data-type="${pageType}">1</button>`;
+                 if (startPage > 2) html += `<span class="page-dots" style="padding: 8px 12px;">...</span>`;
+             }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}" data-type="${pageType}">${i}</button>`;
+            }
+            
+             if (endPage < totalPages) {
+                 if (endPage < totalPages - 1) html += `<span class="page-dots" style="padding: 8px 12px;">...</span>`;
+                 html += `<button class="page-btn" data-page="${totalPages}" data-type="${pageType}">${totalPages}</button>`;
+             }
+
+            html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}" data-type="${pageType}">Próximo</button>`;
+            
+            container.innerHTML = html;
+            
+            container.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const page = parseInt(this.getAttribute('data-page'));
+                    const type = this.getAttribute('data-type');
+                    
+                    if (type === 'networks') {
+                        appState.currentPage.networks = page;
+                        renderNetworksTable();
+                    } else if (type === 'details') {
+                        appState.currentPage.details = page;
+                        renderDetails();
+                    }
+                });
+            });
+        }
+
+        // --- Gráfico e Exportação ---
+
+        function initializeGaugeChart() {
+             const ctx = document.getElementById('gaugeChart');
+             if (!ctx) return;
+             if (gaugeChartInstance) {
+                 gaugeChartInstance.destroy();
+             }
+             
+             const metaOkColor = '#28a745';
+             const metaWarningColor = '#ffc107';
+             const metaDangerColor = '#dc3545';
+             
+             const metaBaixa = META - 15;
+
+            gaugeChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [metaBaixa, 15, 100 - META],
+                        backgroundColor: [metaDangerColor, metaWarningColor, metaOkColor],
+                        borderWidth: 0,
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        gaugeNeedle: {
+                            value: 0,
+                            meta: META,
+                        }
+                    }
+                },
+                plugins: [gaugeNeedle]
+            });
+        }
+        
+        function renderGaugeChart(adherence) {
+            if (gaugeChartInstance) {
+                 const adherenceNum = parseFloat(adherence) || 0;
+                
+                gaugeChartInstance.options.plugins.gaugeNeedle.value = adherenceNum;
+                totalAdherenceElement.textContent = `${adherence.toFixed(1)}%`;
+                gaugeChartInstance.update();
+            }
+        }
+
+        function exportDashboard() {
+             if (appState.processedData.networks.length === 0) {
+                 alert("Não há dados para exportar. Carregue os dados primeiro.");
+                 return;
+             }
+             const wb = XLSX.utils.book_new();
+             const ws = XLSX.utils.json_to_sheet(
+                 appState.processedData.networks.map(net => ({
+                    'Rede': net.name,
+                    'Aderência (%)': net.adherence.toFixed(1),
+                    'Peso (%)': net.weight.toFixed(1),
+                    'Qtd Lojas': net.stores
+                 }))
+             );
+             XLSX.utils.book_append_sheet(wb, ws, "Visão Geral Redes");
+             XLSX.writeFile(wb, "Dashboard_Aderencia_Redes.xlsx");
+        }
+
+        function exportDetails() {
+            if (appState.filteredDetails.length === 0) {
+                 alert("Não há dados para exportar. Verifique os filtros ou carregue os dados.");
+                 return;
+             }
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(
+                 appState.filteredDetails.map(store => ({
+                    'Rede': store.network,
+                    'CNPJ (Loja)': store.store,
+                    'Produto': store.product,
+                    'TTC OK': store.ttcOk,
+                    'TTC Abaixo': store.ttcBelow,
+                    'TTC Acima': store.ttcAbove,
+                    'Aderência (%)': store.adherence.toFixed(1),
+                    'Região': store.region,
+                    'Canal': store.channel,
+                    'Data Início': store.weekStart,
+                    'Data Fim': store.weekEnd
+                 }))
+            );
+             XLSX.utils.book_append_sheet(wb, ws, "Detalhes Aderência");
+             XLSX.writeFile(wb, "Detalhes_Aderencia_Lojas.xlsx");
+        }
+        
+        // --- [NOVO] Funções do Chat IA ---
+        
+        function addChatMessage(message, sender, id = null) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('chat-message', sender);
+            msgDiv.textContent = message;
+            if (id) {
+                msgDiv.id = id;
+            }
+            if (sender === 'bot' && id === 'loading-msg') {
+                msgDiv.classList.add('loading');
+            }
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+        
+        async function handleSendMessage() {
+            const prompt = chatInput.value.trim();
+            if (prompt === '') return;
+            
+            if (appState.allData.length === 0) {
+                addChatMessage("Por favor, carregue os dados da planilha primeiro clicando em 'Carregar Dados'.", 'bot');
+                return;
+            }
+            
+            addChatMessage(prompt, 'user');
+            chatInput.value = '';
+            addChatMessage('Analisando...', 'bot', 'loading-msg');
+            
+            try {
+                const aiResponse = await getAiResponse(prompt);
+                const loadingMessage = document.getElementById('loading-msg');
+                if (loadingMessage) {
+                    loadingMessage.textContent = aiResponse;
+                    loadingMessage.classList.remove('loading');
+                    loadingMessage.id = '';
+                } else {
+                    addChatMessage(aiResponse, 'bot');
+                }
+            } catch (error) {
+                console.error("Erro na API de IA:", error);
+                 const loadingMessage = document.getElementById('loading-msg');
+                 if (loadingMessage) {
+                    loadingMessage.textContent = "Desculpe, não consegui me conectar ao assistente. Tente novamente.";
+                    loadingMessage.classList.remove('loading');
+                    loadingMessage.id = '';
+                 }
+            }
+        }
+        
+        async function getAiResponse(prompt) {
+            const apiKey = ""; // Chave da API
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const dataContext = JSON.stringify({
+                filtrosAtuaisDashboard: {
+                    semanaDashboard: weekFilterDashboard.value || "Geral",
+                },
+                filtrosAtuaisVisaoLoja: {
+                    rede: networkFilterLoja.value || "Todas",
+                    semana: weekFilterLoja.value || "Todas"
+                },
+                resumoDashboard: {
+                    aderenciaTotalPonderada: appState.processedData.totalAdherence,
+                    meta: META,
+                    top10RedesPorPeso: appState.processedData.networks.sort((a, b) => b.weight - a.weight).slice(0, 10),
+                },
+                resumoVisaoLoja: {
+                     topLojasDetratoras: appState.processedData.detractorStores.slice(0, 10), 
+                     topSkusAtivacao: appState.processedData.activationSkus.slice(0, 10),
+                     topSkusNaoAtivados: appState.processedData.nonActivationSkus.slice(0, 10) 
+                }
+            });
+            
+            const systemPrompt = `Você é um analista de dados especialista em varejo e no mercado de cervejas da Ambev. O usuário fornecerá um conjunto de dados (JSON) sobre a aderência ao calendário de cerveja. Responda às perguntas do usuário com base *apenas* nesses dados. Seja conciso e direto. Forneça insights, identifique os 3 piores e melhores em aderência, e aponte oportunidades. Fale em português do Brasil.`;
+            
+            const userMessage = `Contexto de Dados: ${dataContext}\n\nPergunta do Usuário: ${prompt}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userMessage }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                return "Não obtive uma resposta válida do assistente.";
+            }
+        }
+        
+    </script>
+</body>
+</html>
+
