@@ -1,6 +1,6 @@
 📅 Dashboard de Aderência ao Calendário Promocional
 
-Este projeto é um dashboard interativo desenvolvido para acompanhar a aderência das marcas de cerveja ao calendário promocional da Ambev.
+  Este projeto é um dashboard interativo desenvolvido para acompanhar a aderência das marcas de cerveja ao calendário promocional da Ambev.
 
 ➡️ Acesse a versão ao vivo: http://aderenciacalendario.online/
 
@@ -12,42 +12,43 @@ A principal característica deste projeto é que ele não necessita de um backen
 
 ✨ Funcionalidades Principais
 
-Dashboard Interativo: Uma interface moderna (dark mode) com visuais 3D (Globo) para apresentação dos dados.
+  Dashboard Interativo: Uma interface moderna (dark mode) com visuais 3D (Globo) para apresentação dos dados.
 
-Consumo de Google Sheets: Os dados são lidos diretamente de um Google Sheet publicado como CSV.
+  Consumo de Google Sheets: Os dados são lidos diretamente de um Google Sheet publicado como CSV.
 
-Atualização Automática: As informações no site são atualizadas assim que a planilha é modificada (pode haver um pequeno delay de cache).
+  Atualização Automática: As informações no site são atualizadas assim que a planilha é modificada (pode haver um pequeno delay de cache).
 
-Sem Backend: A lógica de leitura e exibição dos dados é feita 100% no front-end (client-side).
-
-Responsivo: Funciona em desktops, tablets e celulares.
+  Sem Backend: A lógica de leitura e exibição dos dados é feita 100% no front-end (client-side).
+  
+  Responsivo: Funciona em desktops, tablets e celulares.
 
 🛠️ Tecnologias Utilizadas
 
-Este projeto foi construído utilizando as seguintes tecnologias:
+  Este projeto foi construído utilizando as seguintes tecnologias:
 
-HTML5: Estrutura semântica da página.
+  HTML5: Estrutura semântica da página.
 
-Tailwind CSS: Framework CSS para estilização rápida e responsiva.
+  Tailwind CSS: Framework CSS para estilização rápida e responsiva.
 
-JavaScript (ES6+): Para a lógica de negócios, interatividade e o globo 3D.
+  JavaScript (ES6+): Para a lógica de negócios, interatividade e o globo 3D.
 
-Three.js: Biblioteca 3D para a criação do globo interativo.
+  Three.js: Biblioteca 3D para a criação do globo interativo.
 
-GitHub Pages: Para hospedagem gratuita do site.
+  GitHub Pages: Para hospedagem gratuita do site.
 
 🖼️ Screenshot
 
-(Aqui você pode adicionar um screenshot do seu dashboard final. Basta arrastar a imagem para o README no GitHub)
+<img width="1182" height="811" alt="image" src="https://github.com/user-attachments/assets/1ae84805-48b3-4662-8ade-55d99d2bae46" />
+
 
 🚀 Como Funciona a Atualização de Dados
 
-Google Sheets: Crie uma planilha no Google Sheets com os dados.
+  Google Sheets: Crie uma planilha no Google Sheets com os dados.
 
-Publicar na Web: Vá em Arquivo > Compartilhar > Publicar na Web.
+  Publicar na Web: Vá em Arquivo > Compartilhar > Publicar na Web.
 
-Formato CSV: Escolha publicar a aba desejada como "Valores separados por vírgula (.csv)".
+  Formato CSV: Escolha publicar a aba desejada como "Valores separados por vírgula (.csv)".
 
-Link: Pegue o link gerado e insira no código JavaScript do projeto (na função fetch ou similar).
-
-Pronto! O JavaScript irá buscar esse CSV e popular o dashboard.
+  Link: Pegue o link gerado e insira no código JavaScript do projeto (na função fetch ou similar).
+  
+  Pronto! O JavaScript irá buscar esse CSV e popular o dashboard.
