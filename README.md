@@ -1,54 +1,54 @@
-📅 Dashboard de Aderência ao Calendário Promocional
+# 📅 Dashboard de Aderência ao Calendário Promocional
 
-  Este projeto é um dashboard interativo desenvolvido para acompanhar a aderência das marcas de cerveja ao calendário promocional da Ambev.
+Este projeto é um dashboard interativo desenvolvido para acompanhar a aderência das marcas de cerveja ao calendário promocional da Ambev.
 
-➡️ Acesse a versão ao vivo: http://aderenciacalendario.online/
+**➡️ Acesse a versão ao vivo:** [**http://aderenciacalendario.online/**](http://aderenciacalendario.online/)
 
-🎯 Sobre o Projeto
+## 🎯 Sobre o Projeto
 
 O sistema foi criado com o objetivo de fornecer uma visualização clara e em tempo real da performance promocional das marcas.
 
-A principal característica deste projeto é que ele não necessita de um backend tradicional. Ele consome dados diretamente de uma planilha do Google Sheets publicada publicamente como um arquivo CSV. Isso permite que qualquer pessoa com acesso à planilha possa atualizar os dados do dashboard automaticamente, apenas editando a planilha.
+### A principal característica deste projeto é que ele **não necessita de um backend tradicional**. Ele consome dados diretamente de uma planilha do Google Sheets publicada publicamente como um arquivo CSV. Isso permite que qualquer pessoa com acesso à planilha possa atualizar os dados do dashboard automaticamente, apenas editando a planilha.
 
-✨ Funcionalidades Principais
+## ✨ Funcionalidades Principais
 
-  Dashboard Interativo: Uma interface moderna (dark mode) com visuais 3D (Globo) para apresentação dos dados.
+* **Dashboard Interativo:** Uma interface moderna (dark mode) com visuais 3D (Globo) para apresentação dos dados.
 
-  Consumo de Google Sheets: Os dados são lidos diretamente de um Google Sheet publicado como CSV.
+* **Consumo de Google Sheets:** Os dados são lidos diretamente de um Google Sheet publicado como CSV.
 
-  Atualização Automática: As informações no site são atualizadas assim que a planilha é modificada (pode haver um pequeno delay de cache).
+* **Atualização Automática:** As informações no site são atualizadas assim que a planilha é modificada (pode haver um pequeno delay de cache).
 
-  Sem Backend: A lógica de leitura e exibição dos dados é feita 100% no front-end (client-side).
-  
-  Responsivo: Funciona em desktops, tablets e celulares.
+* **Sem Backend:** A lógica de leitura e exibição dos dados é feita 100% no front-end (client-side).
 
-🛠️ Tecnologias Utilizadas
+* **Responsivo:** Funciona em desktops, tablets e celulares.
 
-  Este projeto foi construído utilizando as seguintes tecnologias:
+## 🛠️ Tecnologias Utilizadas
 
-  HTML5: Estrutura semântica da página.
+Este projeto foi construído utilizando as seguintes tecnologias:
 
-  Tailwind CSS: Framework CSS para estilização rápida e responsiva.
+* **HTML5:** Estrutura semântica da página.
 
-  JavaScript (ES6+): Para a lógica de negócios, interatividade e o globo 3D.
+* **Tailwind CSS:** Framework CSS para estilização rápida e responsiva.
 
-  Three.js: Biblioteca 3D para a criação do globo interativo.
+* **JavaScript (ES6+):** Para a lógica de negócios, interatividade e o globo 3D.
 
-  GitHub Pages: Para hospedagem gratuita do site.
+* **Three.js:** Biblioteca 3D para a criação do globo interativo.
 
-🖼️ Screenshot
+* **GitHub Pages:** Para hospedagem gratuita do site.
 
-<img width="1182" height="811" alt="image" src="https://github.com/user-attachments/assets/1ae84805-48b3-4662-8ade-55d99d2bae46" />
+## 🖼️ Screenshot
+
+<img width="937" height="909" alt="image" src="https://github.com/user-attachments/assets/a3b5132a-2716-422a-bef9-82e1baf46744" />
 
 
-🚀 Como Funciona a Atualização de Dados
+## 🚀 Como Funciona a Atualização de Dados
 
-  Google Sheets: Crie uma planilha no Google Sheets com os dados.
+1. **Google Sheets:** Crie uma planilha no Google Sheets com os dados.
 
-  Publicar na Web: Vá em Arquivo > Compartilhar > Publicar na Web.
+2. **Publicar na Web:** Vá em `Arquivo` > `Compartilhar` > `Publicar na Web`.
 
-  Formato CSV: Escolha publicar a aba desejada como "Valores separados por vírgula (.csv)".
+3. **Formato CSV:** Escolha publicar a aba desejada como "Valores separados por vírgula (.csv)".
 
-  Link: Pegue o link gerado e insira no código JavaScript do projeto (na função fetch ou similar).
-  
-  Pronto! O JavaScript irá buscar esse CSV e popular o dashboard.
+4. **Link:** Pegue o link gerado e insira no código JavaScript do projeto (na função `fetch` ou similar).
+
+5. **Pronto!** O JavaScript irá buscar esse CSV e popular o dashboard.
